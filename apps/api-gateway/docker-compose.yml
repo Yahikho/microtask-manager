@@ -1,0 +1,27 @@
+# API Gateway Service (sin base de datos)
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: ../../
+      dockerfile: apps/api-gateway/Dockerfile
+    container_name: api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - RABBITMQ_URL=amqp://user:password@rabbitmq:5672
+      - AUTH_SERVICE_URL=http://auth-microservice:3001
+      - TASKS_SERVICE_URL=http://microtask-manager:3002
+    volumes:
+      - ../../apps/api-gateway/src:/app/apps/api-gateway/src
+      - ../../node_modules:/app/node_modules
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+networks:
+  microservices-network:
+    external: true

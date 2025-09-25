@@ -1,8 +1,50 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "src",
+  "sourceRoot": "apps/microtask-manager/src",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/microtask-manager/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/microtask-manager",
+  "projects": {
+    "api-gateway": {
+      "type": "application",
+      "root": "apps/api-gateway",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-gateway/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
+      }
+    },
+    "apps/api-gateway": {
+      "type": "application",
+      "root": "apps/apps/api-gateway",
+      "entryFile": "main",
+      "sourceRoot": "apps/apps/api-gateway/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/apps/api-gateway/tsconfig.app.json"
+      }
+    },
+    "auth-microservice": {
+      "type": "application",
+      "root": "apps/auth-microservice",
+      "entryFile": "main",
+      "sourceRoot": "apps/auth-microservice/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/auth-microservice/tsconfig.app.json"
+      }
+    },
+    "microtask-manager": {
+      "type": "application",
+      "root": "apps/microtask-manager",
+      "entryFile": "main",
+      "sourceRoot": "apps/microtask-manager/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/microtask-manager/tsconfig.app.json"
+      }
+    }
   }
 }

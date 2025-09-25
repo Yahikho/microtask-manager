@@ -1,0 +1,50 @@
+# Microtask Manager Service (con su base de datos)
+version: '3.8'
+
+services:
+  tasks-postgres:
+    image: postgres:13
+    container_name: tasks-postgres
+    environment:
+      POSTGRES_USER: tasks_user
+      POSTGRES_PASSWORD: tasks_password
+      POSTGRES_DB: tasks_db
+    ports:
+      - "5434:5432"  # Puerto diferente para evitar conflictos
+    volumes:
+      - tasks_postgres_data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  microtask-manager:
+    build:
+      context: ../../
+      dockerfile: apps/microtask-manager/Dockerfile
+    container_name: microtask-manager
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - POSTGRES_HOST=tasks-postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=tasks_user
+      - POSTGRES_PASSWORD=tasks_password
+      - POSTGRES_DB=tasks_db
+      - RABBITMQ_URL=amqp://user:password@rabbitmq:5672
+    volumes:
+      - ../../apps/microtask-manager/src:/app/apps/microtask-manager/src
+      - ../../node_modules:/app/node_modules
+    networks:
+      - microservices-network
+    depends_on:
+      - tasks-postgres
+    restart: unless-stopped
+
+volumes:
+  tasks_postgres_data:
+
+networks:
+  microservices-network:
+    external: true

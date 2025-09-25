@@ -1,0 +1,62 @@
+# Auth Microservice (con su base de datos)
+version: '3.8'
+
+services:
+  auth-postgres:
+    image: postgres:13
+    container_name: auth-postgres
+    environment:
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_password
+      POSTGRES_DB: auth_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - auth_postgres_data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  mongo:
+    image: mongo
+    container_name: auth-mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - "27017:27017"
+    networks:
+      - microservices-network
+  auth-microservice:
+    build:
+      context: ../../
+      dockerfile: apps/auth-microservice/Dockerfile
+    container_name: auth-microservice
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - POSTGRES_HOST=auth-postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=auth_user
+      - POSTGRES_PASSWORD=auth_password
+      - POSTGRES_DB=auth_db
+      - RABBITMQ_URL=amqp://user:password@rabbitmq:5672
+      - JWT_SECRET=super-secret-jwt-key-here
+    volumes:
+      - ../../apps/auth-microservice/src:/app/apps/auth-microservice/src
+      - ../../node_modules:/app/node_modules
+    networks:
+      - microservices-network
+    depends_on:
+      - auth-postgres
+    restart: unless-stopped
+
+volumes:
+  auth_postgres_data:
+
+networks:
+  microservices-network:
+    external: true
