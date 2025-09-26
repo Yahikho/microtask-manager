@@ -4,6 +4,9 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
+import { CreateTaskHandler } from './commands/handler/create-task.handler';
+import { TaskRepository } from './repository/task-repository';
+import { TaskEntity } from './entities/task.entity';
 
 @Module({
   imports: [
@@ -21,6 +24,7 @@ import { JwtModule } from '@nestjs/jwt';
       synchronize: false,
       autoLoadEntities: true,
     }),
+    TypeOrmModule.forFeature([TaskEntity]),
     JwtModule.register({
       global: true,
       secret: process.env.SECRET_KEY || 'my_secret_key',
@@ -28,7 +32,10 @@ import { JwtModule } from '@nestjs/jwt';
     })
   ],
   controllers: [TaskMicroserviceController],
-  providers: [],
+  providers: [
+    CreateTaskHandler,
+    TaskRepository,
+  ],
 })
 export class TaskMicroserviceModule {
 
