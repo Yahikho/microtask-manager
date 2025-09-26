@@ -1,4 +1,4 @@
-# Configuración de Desarrollo
+# Configuración
 
 ## Arquitectura de Microservicios
 
@@ -7,18 +7,28 @@ Cada microservicio tiene su propio `docker-compose.yml` con su propia base de da
 ### Servicios por microservicio:
 
 #### Auth Microservice (`apps/auth-microservice/docker-compose.yml`):
-- **auth-postgres**: PostgreSQL en puerto 5433 con base de datos `auth_db`
-- **auth-microservice**: Puerto 3001 (con migraciones automáticas en Dockerfile)
+- **auth-postgres**: PostgreSQL en puerto 5433 (configurable por `.env`)
+- **auth-microservice**: Puerto 3001 (configurable por `.env`) con prefijo de API `api-auth/`
 
 #### Task Microservice (`apps/task-microservice/docker-compose.yml`):
-- **task-postgres**: PostgreSQL en puerto 5434 con base de datos `task_db`  
-- **task-microservice**: Puerto 3002 (con migraciones automáticas en Dockerfile)
+- **task-postgres**: PostgreSQL en puerto 5434 (configurable por `.env`)  
+- **task-microservice**: Puerto 3002 (configurable por `.env`)
 
 ### Migraciones Automáticas
 
-Las migraciones se ejecutan automáticamente en el **Dockerfile** de cada microservicio:
-- **auth-microservice**: Ejecuta `npm run migration:run:auth` antes de iniciar
-- **task-microservice**: Ejecuta `npm run migration:run:task` antes de iniciar
+Las migraciones se ejecutan automáticamente en el **Dockerfile** de cada microservicio al arrancar el contenedor:
+- **auth-microservice**: `npm run migration:run:auth` antes de iniciar
+- **task-microservice**: `npm run migration:run:task` antes de iniciar
+
+En desarrollo, puedes sobreescribir el comando en `docker-compose.yml` para hot-reload:
+
+```yaml
+  auth-microservice:
+    command: sh -c "npm run migration:run:auth && npm run auth-microservice:dev"
+
+  task-microservice:
+    command: sh -c "npm run migration:run:task && npm run task-microservice:dev"
+```
 
 ### Comandos para levantar los servicios:
 
@@ -28,15 +38,15 @@ docker network create microservices-network
 
 # Levantar auth-microservice (desde su directorio)
 cd apps/auth-microservice
-docker-compose up -d
+docker-compose up -d --build
 
 # Levantar task-microservice (desde su directorio)  
 cd ../task-microservice
-docker-compose up -d
+docker-compose up -d --build
 
 # O levantar ambos desde el directorio raíz:
-docker-compose -f apps/auth-microservice/docker-compose.yml up -d
-docker-compose -f apps/task-microservice/docker-compose.yml up -d
+docker-compose -f apps/auth-microservice/docker-compose.yml up -d --build
+docker-compose -f apps/task-microservice/docker-compose.yml up -d --build
 
 # Ver logs de un microservicio específico
 docker-compose -f apps/auth-microservice/docker-compose.yml logs -f
@@ -87,39 +97,54 @@ npm run start:dev api-gateway
 
 ## Variables de Entorno para Microservicios
 
-### Auth Microservice (Variables configuradas en `apps/auth-microservice/docker-compose.yml`)
+### Gestión de variables de entorno (.env)
+
+Ahora las credenciales y configuración se toman desde un archivo `.env` en la raíz del proyecto, y los `docker-compose.yml` usan placeholders `${VARIABLE}`. No subas `.env` al repositorio; en su lugar, crea un `.env` local basado en este ejemplo:
 
 ```env
+# Global
 NODE_ENV=development
-PORT=3001
 
-# Base de datos (conecta a auth-postgres en puerto 5433)
-POSTGRES_HOST=auth-postgres
-POSTGRES_PORT=5432
-POSTGRES_USER=auth_user
-POSTGRES_PASSWORD=auth_password
-POSTGRES_DB=auth_db
+# Auth service
+AUTH_SERVICE_PORT=3001
+AUTH_POSTGRES_USER=auth_user
+AUTH_POSTGRES_PASSWORD=auth_password
+AUTH_POSTGRES_DB=auth_db
+AUTH_POSTGRES_PORT=5433
+AUTH_MONGO_ROOT_USER=root
+AUTH_MONGO_ROOT_PASSWORD=example
+AUTH_MONGO_DB_NAME=auth
+AUTH_MONGO_PORT=27017
+AUTH_JWT_SECRET=change-me
+AUTH_JWT_EXPIRES_IN=24h
 
-# JWT Configuration
-JWT_SECRET=super-secret-jwt-key-here
+# Task service
+TASK_SERVICE_PORT=3002
+TASK_POSTGRES_USER=task_user
+TASK_POSTGRES_PASSWORD=task_password
+TASK_POSTGRES_DB=task_db
+TASK_POSTGRES_PORT=5434
+TASK_MONGO_ROOT_USER=root
+TASK_MONGO_ROOT_PASSWORD=example
+TASK_MONGO_DB_NAME=task
+TASK_MONGO_PORT=27018
+TASK_JWT_SECRET=change-me-too
+TASK_JWT_EXPIRES_IN=24h
 ```
+
+Los servicios en `apps/*/docker-compose.yml` ya incluyen `env_file: .env` para cargar este archivo.
+
+### Auth Microservice (endpoints)
+
+Prefijo global: `api-auth/`
+
+Ejemplos:
+- Registro: `POST http://localhost:${AUTH_SERVICE_PORT}/api-auth/signup`
+- Login: `POST http://localhost:${AUTH_SERVICE_PORT}/api-auth/signin`
 
 ### Task Microservice (Variables configuradas en `apps/task-microservice/docker-compose.yml`)
 
-```env
-NODE_ENV=development
-PORT=3002
-
-# Base de datos (conecta a task-postgres en puerto 5434)
-POSTGRES_HOST=task-postgres
-POSTGRES_PORT=5432
-POSTGRES_USER=task_user
-POSTGRES_PASSWORD=task_password
-POSTGRES_DB=task_db
-
-# JWT Configuration
-JWT_SECRET=super-secret-jwt-key-here
-```
+Puerto: `http://localhost:${TASK_SERVICE_PORT}`
 
 ## Migraciones
 
