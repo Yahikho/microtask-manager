@@ -35,6 +35,14 @@ export class TaskRepository {
         }
     }
 
+    async get(user: string){
+        try{
+            return await this.taskRepo.findBy({ user })
+        }catch(e){
+            throw new HttpException(e.message || 'Error', 500)
+        }
+    }
+
     async delete(task: { id: number }) {
 
     }

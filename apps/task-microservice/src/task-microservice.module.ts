@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { CreateTaskHandler } from './commands/handler/create-task.handler';
 import { TaskRepository } from './repository/task-repository';
 import { TaskEntity } from './entities/task.entity';
+import { GetTasksHandler } from './queries/handler/get-tasks.handler';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { TaskEntity } from './entities/task.entity';
   providers: [
     CreateTaskHandler,
     TaskRepository,
+    GetTasksHandler,
   ],
 })
 export class TaskMicroserviceModule {
