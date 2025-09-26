@@ -11,16 +11,20 @@ import { TaskEntity } from './entities/task.entity';
 @Module({
   imports: [
     CqrsModule,
-    MongooseModule.forRoot(process.env.MONGODB_URL || 'mongodb://root:example@localhost:27018', { 
-      dbName: process.env.MONGODB_DB_NAME || 'task' 
-    }),
+    MongooseModule.forRoot(
+      process.env.MONGODB_URL ||
+        `mongodb://${process.env.TASK_MONGO_ROOT_USER}:${process.env.TASK_MONGO_ROOT_PASSWORD}@task-mongo:27018`,
+      {
+        dbName: process.env.TASK_MONGO_DB_NAME || 'task',
+      },
+    ),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.POSTGRES_HOST || process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.POSTGRES_PORT || process.env.DB_PORT || '5434', 10),
-      username: process.env.POSTGRES_USER || process.env.DB_USER || 'task_user',
-      password: process.env.POSTGRES_PASSWORD || process.env.DB_PASS || 'task_password',
-      database: process.env.POSTGRES_DB || process.env.DB_NAME || 'task_db',
+      port: parseInt(process.env.TASK_POSTGRES_PORT || '5434', 10),
+      username: process.env.TASK_POSTGRES_USER,
+      password: process.env.TASK_POSTGRES_PASSWORD,
+      database: process.env.TASK_POSTGRES_DB,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
       synchronize: false,
@@ -29,8 +33,8 @@ import { TaskEntity } from './entities/task.entity';
     TypeOrmModule.forFeature([TaskEntity]),
     JwtModule.register({
       global: true,
-      secret: process.env.JWT_SECRET || process.env.SECRET_KEY || 'my_secret_key',
-      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || process.env.EXPIRES_TOKEN_TIME || '60s' }
+      secret: process.env.TASK_JWT_SECRET || 'my_secret_key',
+      signOptions: { expiresIn: process.env.TASK_JWT_EXPIRES_IN || '60s' }
     })
   ],
   controllers: [TaskMicroserviceController],

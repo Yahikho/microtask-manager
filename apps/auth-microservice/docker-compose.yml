@@ -53,9 +53,10 @@ services:
       - microservices-network
     depends_on:
       - auth-postgres
+      - mongo
     restart: unless-stopped
     env_file:
-      - .env
+      - ../../.env
 
 volumes:
   auth_postgres_data:

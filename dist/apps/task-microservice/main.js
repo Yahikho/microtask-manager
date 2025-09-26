@@ -282,14 +282,17 @@ exports.TaskMicroserviceModule = TaskMicroserviceModule = __decorate([
     (0, common_1.Module)({
         imports: [
             cqrs_1.CqrsModule,
-            mongoose_1.MongooseModule.forRoot('mongodb://root:example@localhost:27018', { dbName: 'task' }),
+            mongoose_1.MongooseModule.forRoot(process.env.MONGODB_URL ||
+                `mongodb://${process.env.TASK_MONGO_ROOT_USER}:${process.env.TASK_MONGO_ROOT_PASSWORD}@task-mongo:27017`, {
+                dbName: process.env.TASK_MONGO_DB_NAME || 'task',
+            }),
             typeorm_1.TypeOrmModule.forRoot({
                 type: 'postgres',
-                host: process.env.DB_HOST || 'localhost',
-                port: parseInt(process.env.DB_PORT || '5434', 10),
-                username: process.env.DB_USER || 'task_user',
-                password: process.env.DB_PASS || 'task_password',
-                database: process.env.DB_NAME || 'task_db',
+                host: process.env.POSTGRES_HOST || process.env.DB_HOST || 'localhost',
+                port: parseInt(process.env.TASK_POSTGRES_PORT || '5434', 10),
+                username: process.env.TASK_POSTGRES_USER,
+                password: process.env.TASK_POSTGRES_PASSWORD,
+                database: process.env.TASK_POSTGRES_DB,
                 entities: [__dirname + '/**/*.entity{.ts,.js}'],
                 migrations: [__dirname + '/migrations/*{.ts,.js}'],
                 synchronize: false,
@@ -298,8 +301,8 @@ exports.TaskMicroserviceModule = TaskMicroserviceModule = __decorate([
             typeorm_1.TypeOrmModule.forFeature([task_entity_1.TaskEntity]),
             jwt_1.JwtModule.register({
                 global: true,
-                secret: process.env.SECRET_KEY || 'my_secret_key',
-                signOptions: { expiresIn: process.env.EXPIRES_TOKEN_TIME || '60s' }
+                secret: process.env.JWT_SECRET || process.env.SECRET_KEY || 'my_secret_key',
+                signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || process.env.EXPIRES_TOKEN_TIME || '60s' }
             })
         ],
         controllers: [task_microservice_controller_1.TaskMicroserviceController],
@@ -426,7 +429,7 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(task_microservice_module_1.TaskMicroserviceModule);
     app.useGlobalPipes(new common_1.ValidationPipe());
     app.setGlobalPrefix('api-task/');
-    await app.listen(process.env.port ?? 3000);
+    await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
 
