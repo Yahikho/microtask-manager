@@ -9,7 +9,7 @@
     "build": "nest build",
     "build:api-gateway": "nest build api-gateway",
     "build:auth-microservice": "nest build auth-microservice",
-    "build:microtask-manager": "nest build microtask-manager",
+    "build:task-microservice": "nest build task-microservice",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -17,7 +17,8 @@
     "start:prod": "node dist/apps/microtask-manager/main",
     "start:prod:api-gateway": "node dist/apps/api-gateway/main",
     "start:prod:auth-microservice": "node dist/apps/auth-microservice/main",
-    "start:prod:microtask-manager": "node dist/apps/microtask-manager/main",
+    "start:prod:task-microservice": "node dist/apps/task-microservice/main",
+
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -27,7 +28,10 @@
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli",
     "migration:generate:auth": "npm run typeorm -- migration:generate ./apps/auth-microservice/migrations/Init -d ./apps/auth-microservice/typeorm.config.ts",
     "migration:run:auth": "npm run typeorm -- migration:run -d ./apps/auth-microservice/typeorm.config.ts",
-    "dev": "nest start auth-microservice --watch"
+    "migration:generate:task": "npm run typeorm -- migration:generate ./apps/task-microservice/migrations/Init -d ./apps/task-microservice/typeorm.config.ts",
+    "migration:run:task": "npm run typeorm -- migration:run -d ./apps/task-microservice/typeorm.config.ts",
+    "auth-microservice:dev": "nest start auth-microservice --watch",
+    "task-microservice:dev": "nest start task-microservice --watch"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

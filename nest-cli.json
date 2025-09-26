@@ -45,6 +45,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/microtask-manager/tsconfig.app.json"
       }
+    },
+    "task-microservice": {
+      "type": "application",
+      "root": "apps/task-microservice",
+      "entryFile": "main",
+      "sourceRoot": "apps/task-microservice/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/task-microservice/tsconfig.app.json"
+      }
     }
   }
 }

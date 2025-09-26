@@ -1,60 +1,60 @@
 version: '3.8'
 
 services:
-  auth-postgres:
+  task-postgres:
     image: postgres:13
-    container_name: auth-postgres
+    container_name: task-postgres
     environment:
-      POSTGRES_USER: auth_user
-      POSTGRES_PASSWORD: auth_password
-      POSTGRES_DB: auth_db
+      POSTGRES_USER: task_user
+      POSTGRES_PASSWORD: task_password
+      POSTGRES_DB: task_db
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
-      - auth_postgres_data:/var/lib/postgresql/data
+      - task_postgres_data:/var/lib/postgresql/data
     networks:
       - microservices-network
     restart: unless-stopped
 
   mongo:
     image: mongo
-    container_name: auth-mongo
+    container_name: task-mongo
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
     ports:
-      - "27017:27017"
+      - "27018:27017"
     networks:
       - microservices-network
-  auth-microservice:
+  task-microservice:
     build:
       context: ../../
-      dockerfile: apps/auth-microservice/Dockerfile
-    container_name: auth-microservice
+      dockerfile: apps/task-microservice/Dockerfile
+    container_name: task-microservice
     ports:
-      - "3001:3001"
+      - "3002:3002"
     environment:
       - NODE_ENV=development
-      - PORT=3001
-      - POSTGRES_HOST=auth-postgres
+      - PORT=3002
+      - POSTGRES_HOST=task-postgres
       - POSTGRES_PORT=5432
-      - POSTGRES_USER=auth_user
-      - POSTGRES_PASSWORD=auth_password
-      - POSTGRES_DB=auth_db
+      - POSTGRES_USER=task_user
+      - POSTGRES_PASSWORD=task_password
+      - POSTGRES_DB=task_db
       - RABBITMQ_URL=amqp://user:password@rabbitmq:5672
       - JWT_SECRET=super-secret-jwt-key-here
     volumes:
-      - ../../apps/auth-microservice/src:/app/apps/auth-microservice/src
+      - ../../apps/task-microservice/src:/app/apps/task-microservice/src
       - ../../node_modules:/app/node_modules
     networks:
       - microservices-network
     depends_on:
-      - auth-postgres
+      - task-postgres
     restart: unless-stopped
 
 volumes:
-  auth_postgres_data:
+  task_postgres_data:
 
 networks:
   microservices-network:
