@@ -10,6 +10,9 @@ import { EventStoreRepository } from './repository/evet-store.repository';
 import { UserReadRepository } from './repository/user-read.repositiry';
 import { EventSchema } from './schemas/event.schema';
 import { PasswordService } from './services/password.service';
+import { CreateJWTService } from './services/create-jwt.service';
+import { SignInHandler } from './queries/handler/signin-user.handler';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -32,6 +35,11 @@ import { PasswordService } from './services/password.service';
       autoLoadEntities: true,
     }),
     TypeOrmModule.forFeature([UserEntity]),
+    JwtModule.register({
+      global: true,
+      secret: process.env.SECRET_KEY || 'my_secret_key',
+      signOptions: { expiresIn: process.env.EXPIRES_TOKEN_TIME || '60s' }
+    })
   ],
   controllers: [AuthMicroserviceController],
   providers: [
@@ -40,6 +48,8 @@ import { PasswordService } from './services/password.service';
     EventStoreRepository,
     UserReadRepository,
     PasswordService,
+    CreateJWTService,
+    SignInHandler
   ],
 })
 export class AuthMicroserviceModule { }

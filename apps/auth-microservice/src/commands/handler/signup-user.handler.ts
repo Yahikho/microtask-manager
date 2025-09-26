@@ -4,6 +4,8 @@ import { EventStoreRepository } from '../../repository/evet-store.repository';
 import { UserSignUpEvent } from '../../events/impl/user-signup';
 import { PasswordService } from '../../services/password.service';
 import { UserReadRepository } from '../../repository/user-read.repositiry';
+import { CreateJWTService } from '../../services/create-jwt.service';
+import { JwtPayloadDto } from '../../dtos/JwtPayload.dto';
 import { ConflictException } from '@nestjs/common';
 
 @CommandHandler(SignUpUserCommand)
@@ -14,6 +16,7 @@ export class SignUpUserHandler implements ICommandHandler<SignUpUserCommand> {
         private readonly eventStoreRepository: EventStoreRepository,
         private readonly passwordService: PasswordService,
         private readonly userReadRepo: UserReadRepository,
+        private readonly createJWTService: CreateJWTService,
     ) { }
 
     async execute(command: SignUpUserCommand) {
@@ -28,10 +31,24 @@ export class SignUpUserHandler implements ICommandHandler<SignUpUserCommand> {
             hashed,
         )
 
-        await this.eventStoreRepository.save(event);
-        this.eventBus.publish(event);
+        await this.eventStoreRepository.save(event)
+        this.eventBus.publish(event)
 
-        return { email: command.email }
+        const user = await this.userReadRepo.create({ 
+            email: command.email, 
+            password: hashed 
+        })
+
+        const jwtPayload = new JwtPayloadDto(user.id, user.email)
+        const token = this.createJWTService.signToken(jwtPayload)
+        
+        return { 
+            user: { 
+                id: user.id,
+                email: user.email 
+            },
+            ...token 
+        }
 
     }
 

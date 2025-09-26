@@ -6,10 +6,10 @@ export class PasswordService {
     private readonly rounds = 10
 
     async hash(plain: string) {
-        return bcrypt.hash(plain, this.rounds)
+        return await bcrypt.hash(plain, this.rounds)
     }
 
     async compare(plain: string, hash: string) {
-        return bcrypt.compare(plain, hash);
+        return await bcrypt.compare(plain, hash);
     }
 }
