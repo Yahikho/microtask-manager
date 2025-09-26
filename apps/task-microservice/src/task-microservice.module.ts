@@ -11,13 +11,13 @@ import { TaskEntity } from './entities/task.entity';
 @Module({
   imports: [
     CqrsModule,
-    MongooseModule.forRoot(
-      process.env.MONGODB_URL ||
-        `mongodb://${process.env.TASK_MONGO_ROOT_USER}:${process.env.TASK_MONGO_ROOT_PASSWORD}@task-mongo:27018`,
-      {
-        dbName: process.env.TASK_MONGO_DB_NAME || 'task',
-      },
-    ),
+    // MongooseModule.forRoot(
+    //   process.env.MONGODB_URL ||
+    //     `mongodb://${process.env.TASK_MONGO_ROOT_USER}:${process.env.TASK_MONGO_ROOT_PASSWORD}@localhost:27018`,
+    //   {
+    //     dbName: process.env.TASK_MONGO_DB_NAME || 'task',
+    //   },
+    // ),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.POSTGRES_HOST || process.env.DB_HOST || 'localhost',

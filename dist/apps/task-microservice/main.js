@@ -70,6 +70,56 @@ exports.CreateTaskCommand = CreateTaskCommand;
 
 /***/ }),
 
+/***/ "./apps/task-microservice/src/dtos/user-input.dto.ts":
+/*!***********************************************************!*\
+  !*** ./apps/task-microservice/src/dtos/user-input.dto.ts ***!
+  \***********************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UserInputDto = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+const task_entity_1 = __webpack_require__(/*! ../entities/task.entity */ "./apps/task-microservice/src/entities/task.entity.ts");
+class UserInputDto {
+    title;
+    description;
+    deadline;
+    status;
+}
+exports.UserInputDto = UserInputDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(3),
+    __metadata("design:type", String)
+], UserInputDto.prototype, "title", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UserInputDto.prototype, "description", void 0);
+__decorate([
+    (0, class_validator_1.IsDate)(),
+    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
+], UserInputDto.prototype, "deadline", void 0);
+__decorate([
+    (0, class_validator_1.IsEnum)(task_entity_1.TaskState),
+    __metadata("design:type", typeof (_b = typeof task_entity_1.TaskState !== "undefined" && task_entity_1.TaskState) === "function" ? _b : Object)
+], UserInputDto.prototype, "status", void 0);
+
+
+/***/ }),
+
 /***/ "./apps/task-microservice/src/entities/task.entity.ts":
 /*!************************************************************!*\
   !*** ./apps/task-microservice/src/entities/task.entity.ts ***!
@@ -147,6 +197,63 @@ __decorate([
 exports.TaskEntity = TaskEntity = __decorate([
     (0, typeorm_1.Entity)('task')
 ], TaskEntity);
+
+
+/***/ }),
+
+/***/ "./apps/task-microservice/src/guards/auth.guard.ts":
+/*!*********************************************************!*\
+  !*** ./apps/task-microservice/src/guards/auth.guard.ts ***!
+  \*********************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AuthGuard = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
+let AuthGuard = class AuthGuard {
+    jwtService;
+    constructor(jwtService) {
+        this.jwtService = jwtService;
+    }
+    async canActivate(context) {
+        const request = context.switchToHttp().getRequest();
+        const token = this.extractTokenFromHeader(request);
+        if (!token) {
+            throw new common_1.UnauthorizedException();
+        }
+        try {
+            const payload = await this.jwtService.verifyAsync(token, {
+                secret: process.env.TASK_JWT_SECRET
+            });
+            request['user'] = payload;
+        }
+        catch {
+            throw new common_1.UnauthorizedException();
+        }
+        return true;
+    }
+    extractTokenFromHeader(request) {
+        const [type, token] = request.headers.authorization?.split(' ') ?? [];
+        return type === 'Bearer' ? token : undefined;
+    }
+};
+exports.AuthGuard = AuthGuard;
+exports.AuthGuard = AuthGuard = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _a : Object])
+], AuthGuard);
 
 
 /***/ }),
@@ -236,16 +343,42 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.TaskMicroserviceController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const user_input_dto_1 = __webpack_require__(/*! ./dtos/user-input.dto */ "./apps/task-microservice/src/dtos/user-input.dto.ts");
+const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
+const create_task_commant_1 = __webpack_require__(/*! ./commands/impl/create-task.commant */ "./apps/task-microservice/src/commands/impl/create-task.commant.ts");
+const auth_guard_1 = __webpack_require__(/*! ./guards/auth.guard */ "./apps/task-microservice/src/guards/auth.guard.ts");
 let TaskMicroserviceController = class TaskMicroserviceController {
-    constructor() { }
+    commandBus;
+    constructor(commandBus) {
+        this.commandBus = commandBus;
+    }
+    async create(req, userInputDto) {
+        const user = req.user.email;
+        const deadline = new Date(userInputDto.deadline);
+        const result = await this.commandBus.execute(new create_task_commant_1.CreateTaskCommand(userInputDto.title, deadline, userInputDto.status, user, userInputDto.description));
+        return result;
+    }
 };
 exports.TaskMicroserviceController = TaskMicroserviceController;
+__decorate([
+    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.Post)('create'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, typeof (_b = typeof user_input_dto_1.UserInputDto !== "undefined" && user_input_dto_1.UserInputDto) === "function" ? _b : Object]),
+    __metadata("design:returntype", Promise)
+], TaskMicroserviceController.prototype, "create", null);
 exports.TaskMicroserviceController = TaskMicroserviceController = __decorate([
     (0, common_1.Controller)(),
-    __metadata("design:paramtypes", [])
+    __metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object])
 ], TaskMicroserviceController);
 
 
@@ -269,7 +402,6 @@ exports.TaskMicroserviceModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const task_microservice_controller_1 = __webpack_require__(/*! ./task-microservice.controller */ "./apps/task-microservice/src/task-microservice.controller.ts");
 const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
-const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
 const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
 const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
 const create_task_handler_1 = __webpack_require__(/*! ./commands/handler/create-task.handler */ "./apps/task-microservice/src/commands/handler/create-task.handler.ts");
@@ -282,10 +414,6 @@ exports.TaskMicroserviceModule = TaskMicroserviceModule = __decorate([
     (0, common_1.Module)({
         imports: [
             cqrs_1.CqrsModule,
-            mongoose_1.MongooseModule.forRoot(process.env.MONGODB_URL ||
-                `mongodb://${process.env.TASK_MONGO_ROOT_USER}:${process.env.TASK_MONGO_ROOT_PASSWORD}@task-mongo:27017`, {
-                dbName: process.env.TASK_MONGO_DB_NAME || 'task',
-            }),
             typeorm_1.TypeOrmModule.forRoot({
                 type: 'postgres',
                 host: process.env.POSTGRES_HOST || process.env.DB_HOST || 'localhost',
@@ -301,8 +429,8 @@ exports.TaskMicroserviceModule = TaskMicroserviceModule = __decorate([
             typeorm_1.TypeOrmModule.forFeature([task_entity_1.TaskEntity]),
             jwt_1.JwtModule.register({
                 global: true,
-                secret: process.env.JWT_SECRET || process.env.SECRET_KEY || 'my_secret_key',
-                signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || process.env.EXPIRES_TOKEN_TIME || '60s' }
+                secret: process.env.TASK_JWT_SECRET || 'my_secret_key',
+                signOptions: { expiresIn: process.env.TASK_JWT_EXPIRES_IN || '60s' }
             })
         ],
         controllers: [task_microservice_controller_1.TaskMicroserviceController],
@@ -356,16 +484,6 @@ module.exports = require("@nestjs/jwt");
 
 /***/ }),
 
-/***/ "@nestjs/mongoose":
-/*!***********************************!*\
-  !*** external "@nestjs/mongoose" ***!
-  \***********************************/
-/***/ ((module) => {
-
-module.exports = require("@nestjs/mongoose");
-
-/***/ }),
-
 /***/ "@nestjs/typeorm":
 /*!**********************************!*\
   !*** external "@nestjs/typeorm" ***!
@@ -373,6 +491,16 @@ module.exports = require("@nestjs/mongoose");
 /***/ ((module) => {
 
 module.exports = require("@nestjs/typeorm");
+
+/***/ }),
+
+/***/ "class-validator":
+/*!**********************************!*\
+  !*** external "class-validator" ***!
+  \**********************************/
+/***/ ((module) => {
+
+module.exports = require("class-validator");
 
 /***/ }),
 
@@ -427,9 +555,13 @@ const task_microservice_module_1 = __webpack_require__(/*! ./task-microservice.m
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(task_microservice_module_1.TaskMicroserviceModule);
-    app.useGlobalPipes(new common_1.ValidationPipe());
+    app.useGlobalPipes(new common_1.ValidationPipe({
+        transform: true,
+        whitelist: true,
+        transformOptions: { enableImplicitConversion: true }
+    }));
     app.setGlobalPrefix('api-task/');
-    await app.listen(process.env.PORT ?? 3000);
+    await app.listen(process.env.TASK_SERVICE_PORT ?? 3004);
 }
 bootstrap();
 

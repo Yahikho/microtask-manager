@@ -871,7 +871,7 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(auth_microservice_module_1.AuthMicroserviceModule);
     app.useGlobalPipes(new common_1.ValidationPipe());
     app.setGlobalPrefix('api-auth/');
-    await app.listen(process.env.PORT ?? 3003);
+    await app.listen(process.env.AUTH_SERVICE_PORT ?? 3003);
 }
 bootstrap();
 
