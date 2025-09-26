@@ -7,6 +7,6 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   
   app.setGlobalPrefix('api-auth/');
-  await app.listen(process.env.port ?? 3002);
+  await app.listen(process.env.PORT ?? 3001);
 }
 bootstrap();

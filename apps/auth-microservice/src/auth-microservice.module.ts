@@ -17,18 +17,20 @@ import { JwtModule } from '@nestjs/jwt';
 @Module({
   imports: [
     CqrsModule,
-    MongooseModule.forRoot('mongodb://root:example@localhost:27017', { dbName: 'auth' }),
+    MongooseModule.forRoot(process.env.MONGODB_URL || 'mongodb://root:example@localhost:27017', { 
+      dbName: process.env.MONGODB_DB_NAME || 'auth' 
+    }),
     MongooseModule.forFeature([{
       name: 'Event',
       schema: EventSchema
     }]),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5433', 10),
-      username: process.env.DB_USER || 'auth_user',
-      password: process.env.DB_PASS || 'auth_password',
-      database: process.env.DB_NAME || 'auth_db',
+      host: process.env.POSTGRES_HOST || process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.POSTGRES_PORT || process.env.DB_PORT || '5433', 10),
+      username: process.env.POSTGRES_USER || process.env.DB_USER || 'auth_user',
+      password: process.env.POSTGRES_PASSWORD || process.env.DB_PASS || 'auth_password',
+      database: process.env.POSTGRES_DB || process.env.DB_NAME || 'auth_db',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
       synchronize: false,
@@ -37,8 +39,8 @@ import { JwtModule } from '@nestjs/jwt';
     TypeOrmModule.forFeature([UserEntity]),
     JwtModule.register({
       global: true,
-      secret: process.env.SECRET_KEY || 'my_secret_key',
-      signOptions: { expiresIn: process.env.EXPIRES_TOKEN_TIME || '60s' }
+      secret: process.env.JWT_SECRET || process.env.SECRET_KEY || 'my_secret_key',
+      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || process.env.EXPIRES_TOKEN_TIME || '60s' }
     })
   ],
   controllers: [AuthMicroserviceController],

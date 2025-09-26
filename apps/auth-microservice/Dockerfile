@@ -14,4 +14,4 @@ RUN npm run build:auth-microservice
 
 EXPOSE 3001
 
-CMD ["npm", "run", "start:prod:auth-microservice"]
+CMD ["sh", "-c", "npm run migration:run:auth && npm run start:prod:auth-microservice"]

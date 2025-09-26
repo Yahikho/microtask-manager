@@ -12,6 +12,6 @@ COPY apps/task-microservice ./apps/task-microservice
 
 RUN npm run build:task-microservice
 
-EXPOSE 3001
+EXPOSE 3002
 
-CMD ["npm", "run", "start:prod:task-microservice"]
+CMD ["sh", "-c", "npm run migration:run:task && npm run start:prod:task-microservice"]

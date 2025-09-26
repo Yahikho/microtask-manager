@@ -1,98 +1,195 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Configuración de Desarrollo
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## Arquitectura de Microservicios
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Cada microservicio tiene su propio `docker-compose.yml` con su propia base de datos:
 
-## Description
+### Servicios por microservicio:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+#### Auth Microservice (`apps/auth-microservice/docker-compose.yml`):
+- **auth-postgres**: PostgreSQL en puerto 5433 con base de datos `auth_db`
+- **auth-microservice**: Puerto 3001 (con migraciones automáticas en Dockerfile)
 
-## Project setup
+#### Task Microservice (`apps/task-microservice/docker-compose.yml`):
+- **task-postgres**: PostgreSQL en puerto 5434 con base de datos `task_db`  
+- **task-microservice**: Puerto 3002 (con migraciones automáticas en Dockerfile)
+
+### Migraciones Automáticas
+
+Las migraciones se ejecutan automáticamente en el **Dockerfile** de cada microservicio:
+- **auth-microservice**: Ejecuta `npm run migration:run:auth` antes de iniciar
+- **task-microservice**: Ejecuta `npm run migration:run:task` antes de iniciar
+
+### Comandos para levantar los servicios:
 
 ```bash
-$ npm install
+# Crear la red compartida primero
+docker network create microservices-network
+
+# Levantar auth-microservice (desde su directorio)
+cd apps/auth-microservice
+docker-compose up -d
+
+# Levantar task-microservice (desde su directorio)  
+cd ../task-microservice
+docker-compose up -d
+
+# O levantar ambos desde el directorio raíz:
+docker-compose -f apps/auth-microservice/docker-compose.yml up -d
+docker-compose -f apps/task-microservice/docker-compose.yml up -d
+
+# Ver logs de un microservicio específico
+docker-compose -f apps/auth-microservice/docker-compose.yml logs -f
+
+# Parar servicios
+docker-compose -f apps/auth-microservice/docker-compose.yml down
+docker-compose -f apps/task-microservice/docker-compose.yml down
 ```
 
-## Compile and run the project
+## API Gateway - Desarrollo Local
+
+Para el **api-gateway**, debes ejecutarlo localmente (no en Docker):
+
+### 1. Crear archivo .env en apps/api-gateway/
+
+```env
+# API Gateway - Desarrollo Local
+NODE_ENV=development
+PORT=3000
+
+# URLs de los microservicios (cuando están en Docker)
+AUTH_SERVICE_URL=http://localhost:3001
+TASK_SERVICE_URL=http://localhost:3002
+
+# Configuración de base de datos (si el api-gateway necesita acceso directo)
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_USERNAME=user
+DATABASE_PASSWORD=password
+DATABASE_NAME=microtask_db
+
+# JWT Secret (si maneja autenticación)
+JWT_SECRET=your-jwt-secret-key
+
+# Configuraciones adicionales
+API_PREFIX=api
+```
+
+### 2. Ejecutar API Gateway localmente
 
 ```bash
-# development
-$ npm run start
+# Instalar dependencias (si no están instaladas)
+npm install
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+# Ejecutar en modo desarrollo
+npm run start:dev api-gateway
 ```
 
-## Run tests
+## Variables de Entorno para Microservicios
+
+### Auth Microservice (Variables configuradas en `apps/auth-microservice/docker-compose.yml`)
+
+```env
+NODE_ENV=development
+PORT=3001
+
+# Base de datos (conecta a auth-postgres en puerto 5433)
+POSTGRES_HOST=auth-postgres
+POSTGRES_PORT=5432
+POSTGRES_USER=auth_user
+POSTGRES_PASSWORD=auth_password
+POSTGRES_DB=auth_db
+
+# JWT Configuration
+JWT_SECRET=super-secret-jwt-key-here
+```
+
+### Task Microservice (Variables configuradas en `apps/task-microservice/docker-compose.yml`)
+
+```env
+NODE_ENV=development
+PORT=3002
+
+# Base de datos (conecta a task-postgres en puerto 5434)
+POSTGRES_HOST=task-postgres
+POSTGRES_PORT=5432
+POSTGRES_USER=task_user
+POSTGRES_PASSWORD=task_password
+POSTGRES_DB=task_db
+
+# JWT Configuration
+JWT_SECRET=super-secret-jwt-key-here
+```
+
+## Migraciones
+
+### Ejecución Automática
+Las migraciones se ejecutan automáticamente en el **Dockerfile** de cada microservicio al construir la imagen.
+
+### Ejecución Manual (si es necesario)
 
 ```bash
-# unit tests
-$ npm run test
+# Para auth-microservice
+npm run migration:run:auth
 
-# e2e tests
-$ npm run test:e2e
+# Para task-microservice  
+npm run migration:run:task
 
-# test coverage
-$ npm run test:cov
+# Generar nuevas migraciones (después de cambiar entidades)
+npm run migration:generate:auth
+npm run migration:generate:task
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Verificar Migraciones
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Conectar a PostgreSQL de auth-microservice
+docker exec -it auth-postgres psql -U auth_user -d auth_db -c "\dt"
+
+# Conectar a PostgreSQL de task-microservice
+docker exec -it task-postgres psql -U task_user -d task_db -c "\dt"
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Flujo de Desarrollo
 
-## Resources
+1. **Crear red compartida**:
+   ```bash
+   docker network create microservices-network
+   ```
 
-Check out a few resources that may come in handy when working with NestJS:
+2. **Levantar auth-microservice**:
+   ```bash
+   docker-compose -f apps/auth-microservice/docker-compose.yml up -d
+   ```
+   - Se inicia auth-postgres (puerto 5433)
+   - Se construye auth-microservice con migraciones automáticas
+   - Se ejecuta el servicio en puerto 3001
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+3. **Levantar task-microservice**:
+   ```bash
+   docker-compose -f apps/task-microservice/docker-compose.yml up -d
+   ```
+   - Se inicia task-postgres (puerto 5434)
+   - Se construye task-microservice con migraciones automáticas
+   - Se ejecuta el servicio en puerto 3002
 
-## Support
+4. **Ejecutar API Gateway localmente**:
+   ```bash
+   npm run start:dev api-gateway
+   ```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+5. **Acceder a los servicios**:
+   - API Gateway: http://localhost:3000
+   - Auth Service: http://localhost:3001
+   - Task Service: http://localhost:3002
+   - Auth PostgreSQL: localhost:5433
+   - Task PostgreSQL: localhost:5434
 
-## Stay in touch
+## Notas Importantes
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- **Cada microservicio es independiente** con su propio docker-compose.yml
+- **Las migraciones se ejecutan en el Dockerfile** de cada microservicio
+- **Bases de datos separadas** por microservicio (auth_db y task_db)
+- **Puertos únicos** para evitar conflictos (5433 para auth, 5434 para task)
+- **Red compartida** para comunicación entre microservicios
+- **API Gateway corre localmente** para facilitar el desarrollo
